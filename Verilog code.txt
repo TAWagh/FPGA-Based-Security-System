@@ -1,0 +1,121 @@
+
+
+module testing(ir,reset,password,buzzer);
+input ir,reset;
+input [0:3] password;
+output reg buzzer;
+reg set_pass=4'b1001;
+always@(ir,reset,password)
+begin
+if(reset==1)
+buzzer=0;
+if(ir==0 && password!=set_pass)
+buzzer=0;
+end
+endmodule
+
+
+////push button
+
+module testing(button,led);
+output reg led;
+input button;
+always@(*)
+begin
+if(button==1)
+led=1;
+end
+endmodule
+
+
+///7seg display -This is not the original code this is the referance code the original code had if condition with accessed and alert displayed using 8 7 seg - displays
+
+module accessed(
+    input clock_100Mhz, // 100 Mhz clock from fpga
+    input reset, // reset
+    output reg [7:0] Anode_Activate, // anode signals of the 7-segment LED display
+    output reg [6:0] LED_out// cathode patterns of the 7-segment LED display
+    
+    );
+    reg divided_clock;
+    reg [2:0] refresh_counter; // 20-bit for creating 10.5ms refresh period or 380Hz refresh rate
+             // the first 2 MSB bits for creating 4 LED-activating signals with 2.6ms digit period
+                 // count     0 to 2
+
+
+always @(posedge clock_100Mhz or posedge reset)
+    begin
+        if(reset==1)
+            counter <= 0;
+        else 
+		begin
+            if(counter>=499)//activates 500 clock cycles in one sec     
+                 counter <= 0;
+            else
+                counter <= + 1;
+        end
+    end 
+    assign divided_clock = (counter==499)?1:0;
+
+
+    always @(posedge divided_clock or posedge reset)
+    begin 
+	 refresh_counter <= refresh_counter + 1;
+    end 
+    assign LED_activating_counter = refresh_counter[19:18];
+    // anode activating signals for 4 LEDs, digit period of 2.6ms
+
+    // decoder to generate anode signals 
+    
+always @(*)
+    begin
+        case( refresh_counter)
+        3'b000: begin
+            Anode_Activate = 8'b01111111; 
+		LED_out=7'b1111111;
+
+              end
+        3'b001: begin
+            Anode_Activate = 8'b10111111; 
+		LED_out=7'b1111111;
+           
+              end
+        3'b010: begin
+            Anode_Activate = 8'b11011111; 
+		LED_out=7'b1111111;
+
+                          end
+        3'b011: begin
+            Anode_Activate = 8'b11101111; 
+		LED_out=7'b1111111;
+
+			  end
+
+	3'b100: begin
+            Anode_Activate = 8'b11110111;
+ 		LED_out=7'b1111111;
+
+              end
+
+        3'b101: begin
+            Anode_Activate = 8'b11111011; 
+		LED_out=7'b1111111;
+           
+              end
+
+        3'b110: begin
+            Anode_Activate = 8'b11111101; 
+		LED_out=7'b1111111;
+
+              end
+
+        3'b111: begin
+            Anode_Activate = 8'b11101110; 
+            LED_out=7'b1111111;  
+               
+             end
+
+
+        endcase
+    end // ending always block
+endmodule
